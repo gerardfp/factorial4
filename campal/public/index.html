@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CAMPAL · Batalla Campal Pixel Art (24 Jugadores)</title>
+    <link rel="stylesheet" href="/shared/portal-nav.css" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <canvas id="game-canvas"></canvas>
+
+    <!-- START OVERLAY (Main Menu: edit character only + Join Battle / Create Battle) -->
+    <div id="lobby-overlay" class="overlay">
+      <div class="pixel-panel start-box">
+        <header class="lobby-header">
+          <div class="title-wrap">
+            <h1>CAMPAL</h1>
+            <p class="subtitle">BATALLA CAMPAL · 24 JUGADORES · PIXEL ART</p>
+          </div>
+        </header>
+
+        <section class="lobby-col">
+          <div class="roster-header">
+            <h2 class="section-title">TU PERSONAJE (MÁX 32×32px)</h2>
+            <button id="btn-open-editor" class="pixel-btn btn-mini btn-accent" type="button">
+              ✎ EDITAR PERSONAJE
+            </button>
+          </div>
+          <div class="skin-preview-box">
+            <canvas id="skin-preview" width="16" height="24"></canvas>
+            <div class="skin-info">
+              <span id="skin-name">Bandido</span>
+              <div class="skin-buttons" id="skin-selector"></div>
+            </div>
+          </div>
+
+          <label class="field-label" for="input-name">NOMBRE</label>
+          <input id="input-name" class="pixel-input" type="text" maxlength="14" placeholder="Tu apodo..." />
+
+          <div class="controls-legend">
+            <div><kbd>WASD</kbd> Moverse · <kbd>RATÓN</kbd> Apuntar / Atacar</div>
+            <div><kbd>E</kbd> Recoger/Cambiar arma · <kbd>1/2/Q</kbd> Armas</div>
+            <div><kbd>ESPACIO</kbd> Esquivar · <kbd>M</kbd> Silenciar audio</div>
+          </div>
+
+          <div class="menu-main-actions">
+            <button id="btn-join-battle" class="pixel-btn btn-primary" type="button">
+              UNIRSE A UNA BATALLA
+            </button>
+            <button id="btn-create-battle" class="pixel-btn btn-secondary" type="button">
+              CREAR UNA BATALLA
+            </button>
+          </div>
+          <p id="lobby-status" class="status-note">Elige tu personaje y únete o crea una batalla.</p>
+        </section>
+      </div>
+    </div>
+
+    <!-- BATTLE LIST OVERLAY (Shown when clicking "Unirse" and there are >= 2 open battles) -->
+    <div id="join-list-overlay" class="overlay hidden">
+      <div class="pixel-panel join-box">
+        <header class="lobby-header">
+          <div class="title-wrap">
+            <h2 class="modal-heading">BATALLAS ABIERTAS</h2>
+            <p class="subtitle">ELIGE A QUÉ BATALLA QUIERES UNIRTE</p>
+          </div>
+          <button id="btn-refresh-battles" class="pixel-btn btn-mini" type="button">↻ ACTUALIZAR</button>
+        </header>
+
+        <div id="open-battles-list" class="battles-list"></div>
+
+        <div class="end-actions">
+          <button id="btn-join-create-default" class="pixel-btn btn-accent" type="button">CREAR NUEVA POR DEFECTO</button>
+          <button id="btn-join-back" class="pixel-btn btn-secondary" type="button">VOLVER</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CREATE BATTLE CONFIGURATOR OVERLAY -->
+    <div id="create-overlay" class="overlay hidden">
+      <div class="pixel-panel create-box">
+        <header class="lobby-header">
+          <div class="title-wrap">
+            <h2 class="modal-heading">CREAR UNA BATALLA</h2>
+            <p class="subtitle">ELIGE TEMA, CANTIDADES (MÍN-MÁX), BOTS Y SPRITES</p>
+          </div>
+          <button id="btn-create-editor" class="pixel-btn btn-mini btn-accent" type="button">
+            ✎ EDITAR SPRITES (ARMAS, OBJETOS, FONDOS)
+          </button>
+        </header>
+
+        <!-- Theme Carousel with Miniature Battlefield Captures -->
+        <div class="create-top-section">
+          <div class="theme-carousel-header">
+            <div class="theme-header-left">
+              <div class="field-label" style="margin: 0;">TEMA DEL CAMPO DE BATALLA</div>
+              <span id="create-theme-state-pill" class="theme-state-pill hidden">DERIVADO</span>
+            </div>
+            <div class="theme-carousel-nav">
+              <button id="btn-save-theme" class="pixel-btn btn-mini btn-accent" type="button" title="Guardar configuración y cambios como derivado o nuevo tema">
+                💾 GUARDAR TEMA
+              </button>
+              <button id="btn-restore-theme" class="pixel-btn btn-mini hidden" type="button" title="Restaurar al tema original o eliminar tema personalizado">
+                ↺ RESTAURAR ORIGINAL
+              </button>
+              <span id="create-theme-counter" class="theme-counter">1 / 8</span>
+              <button id="btn-theme-prev" class="pixel-btn btn-mini" type="button" aria-label="Tema anterior">◀</button>
+              <button id="btn-theme-next" class="pixel-btn btn-mini" type="button" aria-label="Siguiente tema">▶</button>
+            </div>
+          </div>
+
+          <div class="theme-carousel-shell">
+            <div id="create-theme-list" class="theme-carousel-track" role="listbox" aria-label="Temas del campo de batalla"></div>
+          </div>
+          <div id="create-theme-dots" class="theme-carousel-dots"></div>
+        </div>
+
+        <div class="create-grid">
+          <!-- Left: Per-Weapon Dual-Handle Min/Max Sliders + Medkits -->
+          <section class="lobby-col">
+            <div class="field-label">ARMAS EN EL CAMPO <span class="label-hint">(MÍN – MÁX ALEATORIO)</span></div>
+            <div id="create-weapons-sliders" class="cfg-slider-list"></div>
+
+            <div class="field-label">VIDAS / BOTIQUINES <span class="label-hint">(MÍN – MÁX ALEATORIO)</span></div>
+            <div id="create-medkit-slider" class="cfg-slider-list"></div>
+          </section>
+
+          <!-- Right: Obstacles Dual-Handle Min/Max Sliders + Bots Config (1-23) -->
+          <section class="lobby-col">
+            <div class="field-label">OBSTÁCULOS Y COBERTURAS <span class="label-hint">(MÍN – MÁX ALEATORIO)</span></div>
+            <div id="create-obstacles-sliders" class="cfg-slider-list"></div>
+
+            <div class="field-label">BOTS <span class="label-hint">(MÁX. 24 LUCHADORES EN TOTAL)</span></div>
+            <div class="cfg-slider-list bot-config-box">
+              <label class="bot-toggle">
+                <input type="checkbox" id="cfg-fill-bots" checked />
+                <span>Añadir Bots si quedan huecos libres</span>
+              </label>
+              <label class="cfg-row bot-count-row" id="cfg-max-bots-row">
+                <span>Máximo de bots (1–23)</span>
+                <input id="cfg-max-bots" type="range" min="1" max="23" value="23" />
+                <strong id="cfg-max-bots-val">23</strong>
+              </label>
+              <p class="bot-priority-note">Los jugadores reales siempre tienen preferencia al entrar.</p>
+            </div>
+          </section>
+        </div>
+
+        <div class="create-footer">
+          <button id="btn-create-defaults" class="pixel-btn btn-mini" type="button">↺ VALORES POR DEFECTO</button>
+          <div class="end-actions">
+            <button id="btn-create-back" class="pixel-btn btn-secondary" type="button">VOLVER</button>
+            <button id="btn-create-launch" class="pixel-btn btn-primary" type="button">¡CREAR Y ENTRAR!</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PISKEL-STYLE SPRITE & ANIMATION EDITOR OVERLAY -->
+    <div id="editor-overlay" class="overlay hidden">
+      <div class="pixel-panel editor-box">
+        <button id="ed-btn-close" class="ed-close-btn" type="button" title="Cerrar (Esc)" aria-label="Cerrar">✕</button>
+        <!-- Top Toolbar -->
+        <header class="ed-topbar">
+          <div class="ed-top-left">
+            <strong class="ed-brand">SPRITE STUDIO</strong>
+            <select id="ed-asset-select" class="pixel-input ed-select"></select>
+            <button id="ed-btn-new-char" class="pixel-btn btn-mini btn-accent" type="button" title="Crear nuevo personaje personalizado en PNG">
+              + NUEVO
+            </button>
+            <div class="ed-size-group">
+              <input id="ed-width" class="pixel-input ed-num" type="number" min="4" max="64" value="16" title="Ancho (px)" />
+              <span>×</span>
+              <input id="ed-height" class="pixel-input ed-num" type="number" min="4" max="64" value="24" title="Alto (px)" />
+              <button id="ed-btn-resize" class="pixel-btn btn-mini" type="button">TAM</button>
+            </div>
+          </div>
+
+          <div class="ed-top-right">
+            <input id="ed-png-input" type="file" accept="image/png" class="hidden" />
+            <button id="ed-btn-import-png" class="pixel-btn btn-mini btn-secondary" type="button" title="Cargar PNG o Spritesheet PNG">
+              📂 CARGAR PNG
+            </button>
+            <button id="ed-btn-export-png" class="pixel-btn btn-mini" type="button" title="Descargar fotograma actual en PNG">
+              💾 PNG
+            </button>
+            <button id="ed-btn-export-sheet" class="pixel-btn btn-mini" type="button" title="Descargar tira con todos los fotogramas en PNG">
+              🎞 TIRA PNG
+            </button>
+            <button id="ed-btn-reset-asset" class="pixel-btn btn-mini" type="button" title="Restaurar este sprite al original">
+              ↺ ORIGINAL
+            </button>
+            <button id="ed-btn-save" class="pixel-btn btn-mini btn-accent" type="button">
+              ✔ GUARDAR
+            </button>
+          </div>
+        </header>
+
+        <!-- Main 4-Column Piskel Workspace -->
+        <div class="ed-workspace">
+          <!-- Column 1: Tools & Transforms -->
+          <aside class="ed-col ed-tools-col">
+            <div class="ed-group-label">HERRAMIENTAS</div>
+            <div class="ed-tools-grid">
+              <button class="ed-tool-btn active" data-ed-tool="pen" type="button" title="Lápiz (P)">✏ Lápiz</button>
+              <button class="ed-tool-btn" data-ed-tool="mirror" type="button" title="Pluma Espejo Vertical (V)">🦋 Espejo</button>
+              <button class="ed-tool-btn" data-ed-tool="eraser" type="button" title="Borrador (E / Clic derecho)">⌫ Borrar</button>
+              <button class="ed-tool-btn" data-ed-tool="bucket" type="button" title="Bote de Pintura (B)">🪣 Bote</button>
+              <button class="ed-tool-btn" data-ed-tool="replace" type="button" title="Reemplazar color en todo el fotograma (A)">🎨 Reempl.</button>
+              <button class="ed-tool-btn" data-ed-tool="line" type="button" title="Línea Recta (L)">╱ Línea</button>
+              <button class="ed-tool-btn" data-ed-tool="rect" type="button" title="Rectángulo (R)">▭ Rect.</button>
+              <button class="ed-tool-btn" data-ed-tool="ellipse" type="button" title="Círculo / Elipse (C)">◯ Elipse</button>
+              <button class="ed-tool-btn" data-ed-tool="move" type="button" title="Mover píxeles (M)">✥ Mover</button>
+              <button class="ed-tool-btn" data-ed-tool="picker" type="button" title="Cuentagotas (O / Alt+Clic)"> eyedrop</button>
+            </div>
+
+            <div class="ed-group-label">GROSOR / FORMA</div>
+            <div class="ed-row-btns">
+              <button class="ed-mini-btn active" data-ed-size="1" type="button">1px</button>
+              <button class="ed-mini-btn" data-ed-size="2" type="button">2px</button>
+              <button class="ed-mini-btn" data-ed-size="3" type="button">3px</button>
+              <button id="ed-btn-shape-fill" class="ed-mini-btn" type="button">Relleno: NO</button>
+            </div>
+
+            <div class="ed-group-label">TRANSFORMAR</div>
+            <div class="ed-tools-grid">
+              <button id="ed-btn-fliph" class="ed-mini-btn" type="button" title="Voltear Horizontal">⇄ Flip H</button>
+              <button id="ed-btn-flipv" class="ed-mini-btn" type="button" title="Voltear Vertical">⇅ Flip V</button>
+              <button id="ed-btn-rot" class="ed-mini-btn" type="button" title="Rotar 90°">↻ Rotar</button>
+              <button id="ed-btn-clear" class="ed-mini-btn" type="button" title="Limpiar fotograma">🗑 Limpiar</button>
+            </div>
+
+            <button id="ed-btn-quantize" class="ed-mini-btn ed-full-btn" type="button" title="Ajustar los colores del sprite a la paleta ampliada del juego">
+              ✨ Ajustar a paleta
+            </button>
+
+            <div class="ed-group-label">HISTORIAL</div>
+            <div class="ed-row-btns">
+              <button id="ed-btn-undo" class="ed-mini-btn" type="button" title="Deshacer (Ctrl+Z)">↶ Deshacer</button>
+              <button id="ed-btn-redo" class="ed-mini-btn" type="button" title="Rehacer (Ctrl+Y)">↷ Rehacer</button>
+            </div>
+          </aside>
+
+          <!-- Column 2: Animation Frames Strip -->
+          <aside class="ed-col ed-frames-col">
+            <div class="ed-group-label">FOTOGRAMAS</div>
+            <div class="ed-row-btns">
+              <button id="ed-btn-add-frame" class="ed-mini-btn" type="button">+ Nuevo</button>
+              <button id="ed-btn-dup-frame" class="ed-mini-btn" type="button">⧉ Duplicar</button>
+            </div>
+            <div id="ed-frames-list" class="ed-frames-list"></div>
+          </aside>
+
+          <!-- Column 3: Main Zoomed Pixel Canvas -->
+          <main class="ed-col ed-canvas-col">
+            <div class="ed-canvas-bar">
+              <div class="ed-row-btns">
+                <button id="ed-btn-grid" class="ed-mini-btn active" type="button">Cuadrícula (G)</button>
+                <button id="ed-btn-onion" class="ed-mini-btn active" type="button">Papel Cebolla</button>
+                <button id="ed-btn-bg" class="ed-mini-btn" type="button">Fondo: Damero</button>
+              </div>
+              <span id="ed-coords" class="ed-coords">X:0 Y:0 · 16×24px</span>
+            </div>
+
+            <div class="ed-canvas-stage">
+              <canvas id="ed-work-canvas" width="256" height="384"></canvas>
+            </div>
+
+            <div class="ed-canvas-footer">
+              <span id="ed-status">Listo. Puedes arrastrar y soltar archivos PNG aquí.</span>
+              <button id="ed-btn-reset-all" class="ed-link-btn" type="button">Restaurar todos los sprites</button>
+            </div>
+          </main>
+
+          <!-- Column 4: Live Animation Preview & Palette -->
+          <aside class="ed-col ed-preview-col">
+            <div class="ed-group-label">ANIMACIÓN EN VIVO</div>
+            <div class="ed-preview-wrap">
+              <canvas id="ed-preview-canvas" width="128" height="128"></canvas>
+            </div>
+            <div class="ed-fps-row">
+              <input id="ed-fps" type="range" min="1" max="20" value="8" />
+              <span id="ed-fps-val">8 FPS</span>
+              <button id="ed-btn-preview-flip" class="ed-mini-btn" type="button" title="Invertir vista previa">⇄</button>
+            </div>
+
+            <div class="ed-group-label">PALETA DE COLORES</div>
+            <div id="ed-palette" class="ed-palette-grid"></div>
+
+            <div class="ed-color-custom">
+              <input id="ed-color-picker" type="color" value="#c93842" />
+              <span id="ed-color-hex">#C93842</span>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </div>
+
+    <!-- SAVE THEME MODAL (Choose same-name derivative vs. new theme — never overwrites originals!) -->
+    <div id="save-theme-overlay" class="overlay overlay-top hidden">
+      <div class="pixel-panel save-theme-box">
+        <header class="lobby-header">
+          <div class="title-wrap">
+            <h2 class="modal-heading">GUARDAR TEMA</h2>
+            <p id="save-theme-subtitle" class="subtitle">EL TEMA ORIGINAL NUNCA SE SOBREESCRIBE</p>
+          </div>
+        </header>
+
+        <div class="save-theme-options">
+          <label class="save-theme-option">
+            <input type="radio" name="save-theme-mode" id="save-theme-mode-derive" value="derive" checked />
+            <div class="save-theme-option-body">
+              <strong id="save-theme-derive-label">Guardar con el mismo nombre (derivado)</strong>
+              <span>Se guarda como una versión derivada. El tema original queda intacto y puedes restaurarlo cuando quieras.</span>
+            </div>
+          </label>
+
+          <label class="save-theme-option">
+            <input type="radio" name="save-theme-mode" id="save-theme-mode-new" value="new" />
+            <div class="save-theme-option-body">
+              <strong>Guardar como un tema nuevo</strong>
+              <span>Crea un nuevo tema en el carrusel heredando el tema base y conservando tus cambios.</span>
+            </div>
+          </label>
+
+          <div id="save-theme-new-fields" class="save-theme-new-fields hidden">
+            <label class="field-label" for="save-theme-new-name">NOMBRE DEL NUEVO TEMA</label>
+            <input id="save-theme-new-name" class="pixel-input" type="text" maxlength="28" placeholder="Ej. Secano Nocturno" />
+
+            <label class="field-label" for="save-theme-new-desc">DESCRIPCIÓN (OPCIONAL)</label>
+            <input id="save-theme-new-desc" class="pixel-input" type="text" maxlength="90" placeholder="Breve descripción del campo de batalla..." />
+          </div>
+        </div>
+
+        <p id="save-theme-status" class="status-note"></p>
+
+        <div class="end-actions">
+          <button id="btn-save-theme-cancel" class="pixel-btn btn-secondary" type="button">CANCELAR</button>
+          <button id="btn-save-theme-confirm" class="pixel-btn btn-accent" type="button">✔ GUARDAR TEMA</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- VICTORY / MATCH END OVERLAY -->
+    <div id="end-overlay" class="overlay hidden">
+      <div class="pixel-panel end-box">
+        <h2 id="end-title">¡VICTORIA CAMPAL!</h2>
+        <p id="end-winner-line" class="winner-line"></p>
+        <div class="ranking-wrap">
+          <table class="ranking-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>JUGADOR</th>
+                <th>BAJAS</th>
+                <th>DAÑO</th>
+                <th>TIEMPO</th>
+              </tr>
+            </thead>
+            <tbody id="ranking-body"></tbody>
+          </table>
+        </div>
+        <div class="end-actions">
+          <button id="btn-rematch" class="pixel-btn btn-primary" type="button">¡NUEVA BATALLA!</button>
+          <button id="btn-back-lobby" class="pixel-btn btn-secondary" type="button">CAMBIAR PERSONAJE</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="/shared/player.js"></script>
+    <script type="module" src="js/main.js"></script>
+  </body>
+</html>

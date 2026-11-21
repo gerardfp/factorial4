@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MecanoRace 24 · Campeonato Multiplayer de Mecanografía</title>
+    <link rel="stylesheet" href="/shared/portal-nav.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .multi-badge {
+            display: inline-block;
+            padding: 0.35rem 0.9rem;
+            border-radius: 999px;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            font-size: 0.85rem;
+            font-weight: 800;
+            letter-spacing: 2px;
+            margin-bottom: 1rem;
+            background: rgba(0, 255, 204, 0.08);
+        }
+        .lobby-panel {
+            width: 100%;
+            max-width: 720px;
+            background: var(--bg-panel);
+            border: 1px solid rgba(0, 255, 204, 0.28);
+            border-radius: 14px;
+            padding: 2rem;
+            backdrop-filter: blur(12px);
+        }
+        .lobby-chips {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
+            gap: 0.55rem;
+            margin: 1.2rem 0 1.5rem;
+            max-height: 240px;
+            overflow-y: auto;
+            text-align: left;
+        }
+        .lobby-chip {
+            padding: 0.5rem 0.75rem;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.9rem;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .lobby-chip.me {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: rgba(0, 255, 204, 0.12);
+        }
+        .countdown-banner {
+            font-size: 2.6rem;
+            font-weight: 900;
+            color: var(--primary);
+            text-shadow: 0 0 20px var(--primary-glow);
+            margin-bottom: 0.8rem;
+            min-height: 3.2rem;
+        }
+        .racers-board {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+            gap: 0.45rem;
+            width: 100%;
+            margin-bottom: 0.9rem;
+            max-height: 148px;
+            overflow-y: auto;
+        }
+        .racer-row {
+            background: rgba(0, 0, 0, 0.38);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 7px;
+            padding: 0.35rem 0.55rem;
+            text-align: left;
+            font-size: 0.78rem;
+        }
+        .racer-row.me {
+            border-color: var(--primary);
+            background: rgba(0, 255, 204, 0.1);
+        }
+        .racer-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 6px;
+            margin-bottom: 4px;
+            font-weight: 700;
+        }
+        .racer-name {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .racer-bar-bg {
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+        }
+        .racer-bar-fill {
+            height: 100%;
+            background: var(--secondary);
+            transition: width 0.12s linear;
+        }
+        .racer-row.me .racer-bar-fill {
+            background: var(--primary);
+        }
+        .standings-wrap {
+            width: 100%;
+            max-height: 260px;
+            overflow-y: auto;
+            margin-bottom: 1.5rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="background-effects">
+        <div class="glow glow-1"></div>
+        <div class="glow glow-2"></div>
+    </div>
+
+    <main class="app-container">
+        <!-- WELCOME SCREEN -->
+        <section id="welcome-screen" class="screen active" style="position: relative;">
+            <img src="botanic.png" alt="MecanoRace Logo" class="main-logo">
+            <a href="admin/index.html" class="admin-link-btn" title="Administración">⚙</a>
+            <span class="multi-badge">MULTIJUGADOR · HASTA 24 MECANÓGRAFOS</span>
+            <h1 class="glitch" data-text="MECANORACE">MECANORACE</h1>
+            <p class="subtitle">Compite en directo contra hasta 24 jugadores y bate el récord del servidor.</p>
+            <p id="welcome-record-line" style="color: var(--primary); margin-bottom: 1.8rem; font-weight: 700;"></p>
+            <div class="button-group">
+                <button id="btn-start" class="btn btn-primary">UNIRSE A CARRERA (24P)</button>
+                <button id="btn-show-leaderboard" class="btn btn-secondary">RÉCORDS DEL SERVIDOR</button>
+            </div>
+        </section>
+
+        <!-- LOBBY SCREEN (24-PLAYER WAITING ROOM) -->
+        <section id="lobby-screen" class="screen hidden">
+            <div class="lobby-panel">
+                <span class="multi-badge" id="lobby-room-badge">SALA ABIERTA · 0 / 24</span>
+                <h2 class="section-title" style="font-size: 2rem; margin-bottom: 0.5rem;">SALA DE ESPERA</h2>
+                <p id="lobby-wait-msg" style="color: var(--text-muted); margin-bottom: 0.5rem;">Esperando más jugadores... La carrera empieza en 10s</p>
+                <div id="lobby-players" class="lobby-chips"></div>
+                <div class="button-group">
+                    <button id="btn-start-now" class="btn btn-primary" type="button">¡EMPEZAR YA!</button>
+                    <button id="btn-leave-lobby" class="btn btn-secondary" type="button">SALIR</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- GAME SCREEN -->
+        <section id="game-screen" class="screen hidden">
+            <header class="game-dashboard" style="position: relative;">
+                <div style="position: absolute; top: 10px; right: 10px; display: flex; gap: 0.5rem; z-index: 10;">
+                    <button id="btn-quit" class="btn btn-icon" title="Abandonar" style="padding: 0.4rem 0.7rem;">✕ Salir</button>
+                </div>
+                <div id="race-countdown-banner" class="countdown-banner"></div>
+                <div class="stats-row">
+                    <div class="stat-box">
+                        <span class="stat-label">POSICIÓN</span>
+                        <span id="stat-pos" class="stat-value">1º / 1</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">TIEMPO</span>
+                        <span id="stat-time" class="stat-value">0.0s</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">RÉCORD (FANTASMA)</span>
+                        <span id="stat-ghost-wpm" class="stat-value"
+                            style="color: var(--secondary); text-shadow: 0 0 10px var(--secondary-glow);">-</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">PPM</span>
+                        <span id="stat-wpm" class="stat-value">0</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">PRECISIÓN</span>
+                        <span id="stat-accuracy" class="stat-value">100%</span>
+                    </div>
+                </div>
+
+                <!-- Live 24-Player Progress Radar -->
+                <div id="live-racers-board" class="racers-board"></div>
+
+                <div class="progress-section">
+                    <div class="progress-track" style="margin-bottom: 0.4rem;">
+                        <div id="ghost-progress-bar" class="progress-fill ghost-fill"></div>
+                    </div>
+                    <div class="progress-track" style="margin-bottom: 0.7rem;">
+                        <div id="player-progress-bar" class="progress-fill player-fill"></div>
+                    </div>
+                    <canvas id="wpm-chart" width="800" height="80"
+                        style="width: 100%; height: 80px; display: block;"></canvas>
+                </div>
+                <div class="text-container" id="text-display"></div>
+            </header>
+        </section>
+
+        <!-- RESULT SCREEN -->
+        <section id="result-screen" class="screen hidden">
+            <h2 class="section-title">¡CARRERA TERMINADA!</h2>
+            <p id="saved-notice" style="color: var(--primary); margin-bottom: 1.2rem; font-weight: 700;">
+                ✔ Marca guardada automáticamente en el servidor
+            </p>
+
+            <div class="results-grid" style="margin-bottom: 1.5rem;">
+                <div class="result-card highlight">
+                    <span class="result-label">VELOCIDAD</span>
+                    <span id="final-wpm" class="result-value">0 <small>PPM</small></span>
+                </div>
+                <div class="result-card">
+                    <span class="result-label">PRECISIÓN</span>
+                    <span id="final-accuracy" class="result-value">0%</span>
+                </div>
+                <div class="result-card">
+                    <span class="result-label">TIEMPO</span>
+                    <span id="final-time" class="result-value">0s</span>
+                </div>
+            </div>
+
+            <div class="leaderboard-container standings-wrap">
+                <table class="leaderboard-table">
+                    <thead>
+                        <tr>
+                            <th>POS</th>
+                            <th>JUGADOR</th>
+                            <th>PPM</th>
+                            <th>PRECISIÓN</th>
+                            <th>TIEMPO</th>
+                        </tr>
+                    </thead>
+                    <tbody id="race-standings-body"></tbody>
+                </table>
+            </div>
+
+            <div class="button-group">
+                <button id="btn-play-again" class="btn btn-primary">OTRA CARRERA (24P)</button>
+                <button id="btn-skip-save" class="btn btn-secondary">VER RÉCORDS</button>
+            </div>
+        </section>
+
+        <!-- LEADERBOARD SCREEN -->
+        <section id="leaderboard-screen" class="screen hidden">
+            <h2 class="section-title">🏆 RÉCORDS DEL SERVIDOR</h2>
+
+            <div class="leaderboard-container">
+                <table class="leaderboard-table">
+                    <thead>
+                        <tr>
+                            <th>POS</th>
+                            <th>NOMBRE</th>
+                            <th>PPM</th>
+                            <th>PRECISIÓN</th>
+                            <th>TIEMPO</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboard-body"></tbody>
+                </table>
+            </div>
+
+            <button id="btn-back-home" class="btn btn-secondary mt-4">VOLVER AL INICIO</button>
+        </section>
+    </main>
+
+    <script src="/shared/player.js"></script>
+    <script src="main.js"></script>
+</body>
+
+</html>

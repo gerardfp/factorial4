@@ -1,0 +1,13 @@
+{
+  "name": "campal",
+  "version": "1.0.0",
+  "description": "Batalla campal web pixel art low-pixel (paleta ampliada, personajes <= 32x32px) multijugador hasta 24 jugadores",
+  "type": "module",
+  "scripts": {
+    "start": "node server/index.js",
+    "test": "node tests/verify.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

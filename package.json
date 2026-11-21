@@ -1,0 +1,14 @@
+{
+  "name": "factorial4",
+  "version": "1.0.0",
+  "description": "Portal de juegos casuales multijugador para 24 jugadores (4! = 24) con récords persistentes en servidor",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node tests/verify-all.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

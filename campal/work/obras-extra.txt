@@ -1,0 +1,37 @@
+  {
+    const s = new PixelSurface(42, 34);
+    oval(s, C.SHADOW, 24, 29, 17, 3);
+    tire(s, 11, 27, 5);
+    line(s, C.STEEL_DEEP, 11, 25, 29, 21, 2);
+    line(s, C.STEEL, 26, 22, 31, 29, 2);
+    line(s, C.STEEL_LIGHT, 30, 29, 33, 29);
+    line(s, C.STEEL_DARK, 26, 21, 38, 12, 2);
+    line(s, C.STEEL_LIGHT, 27, 20, 37, 12);
+    rect(s, C.RUBBER, 35, 10, 5, 3);
+    poly(s, C.BLUE_DARK, [[7, 13], [29, 12], [27, 23], [14, 24]]);
+    poly(s, C.BLUE, [[8, 13], [29, 12], [24, 20], [13, 21]]);
+    oval(s, C.MUD, 19, 12, 11, 5);
+    grain(s, [C.EARTH, C.CONCRETE, C.BRICK_LIGHT], 9, 8, 20, 8, 23, 4);
+    line(s, C.STEEL_LIGHT, 7, 13, 29, 12);
+    line(s, C.BLUE_LIGHT, 13, 21, 25, 20);
+    rect(s, C.RUST, 15, 20, 3, 1);
+    sprites.push(makeObsEntry('wheelbarrow', 'Obstáculo: Carretilla cargada', s));
+  }
+
+  {
+    const s = new PixelSurface(42, 30);
+    rect(s, C.SHADOW, 4, 25, 37, 4);
+    rect(s, C.WOOD_DARK, 3, 23, 35, 4);
+    for (let x = 5; x < 36; x += 8) rect(s, C.WOOD_LIGHT, x, 23, 6, 2);
+    for (const [x, y] of [[5, 16], [21, 16], [10, 9], [25, 9], [15, 3]]) {
+      rect(s, C.CONCRETE_SHADE, x + 1, y + 1, 14, 7);
+      rect(s, C.WHITE, x, y, 13, 6);
+      rect(s, C.CONCRETE_LIGHT, x + 1, y + 5, 12, 2);
+      rect(s, C.RED, x + 3, y, 2, 6);
+      rect(s, C.CONCRETE_SHADE, x + 7, y + 2, 4, 1);
+      line(s, C.CONCRETE_SHADE, x, y + 1, x + 1, y + 4);
+      rect(s, C.STEEL_GLOW, x + 7, y, 4, 1);
+    }
+    grain(s, [C.DUST, C.CONCRETE_SHADE], 5, 17, 30, 6, 6, 13);
+    sprites.push(makeObsEntry('cement', 'Obstáculo: Sacos de cemento', s));
+  }

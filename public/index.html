@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FACTORIAL 4 · Juegos Casuales Multiplayer (24 Jugadores)</title>
+    <link rel="stylesheet" href="/shared/portal-nav.css" />
+    <link rel="stylesheet" href="/portal.css" />
+  </head>
+  <body>
+    <div class="bg-grid" aria-hidden="true"></div>
+    <div class="bg-orb orb-a" aria-hidden="true"></div>
+    <div class="bg-orb orb-b" aria-hidden="true"></div>
+
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-badge">4!</div>
+        <div>
+          <h1>FACTORIAL 4</h1>
+          <p>ARCADE MULTIJUGADOR · 24 JUGADORES POR PARTIDA</p>
+        </div>
+      </div>
+
+      <div class="topbar-right">
+        <div class="live-pill" id="live-online-pill" title="Jugadores conectados ahora mismo">
+          <span class="live-dot"></span>
+          <span id="online-count">0</span> en línea
+        </div>
+
+        <button type="button" class="player-pill" id="btn-change-name" title="Cambiar tu nombre de jugador">
+          <span class="player-avatar" id="player-avatar">?</span>
+          <span class="player-pill-meta">
+            <small>JUGADOR</small>
+            <strong id="player-display-name" class="f4-player-name-text">Sin identificar</strong>
+          </span>
+          <span class="edit-icon" aria-hidden="true">✎</span>
+        </button>
+      </div>
+    </header>
+
+    <main class="container">
+      <section class="hero">
+        <div class="hero-copy">
+          <span class="eyebrow">4! = 24 JUGADORES SIMULTÁNEOS · SIN CUENTAS · RÉCORDS EN SERVIDOR</span>
+          <h2>Elige un juego y compite contra hasta <span class="accent-text">24 jugadores</span> en directo</h2>
+          <p>
+            Tu nombre queda guardado automáticamente en este navegador y todos tus récords, victorias y mejores tiempos
+            se registran en el servidor.
+          </p>
+        </div>
+        <div class="hero-actions">
+          <button type="button" class="btn-outline" id="btn-scroll-records">🏆 Ver Récords del Servidor</button>
+        </div>
+      </section>
+
+      <!-- GAMES CATALOG -->
+      <section class="section" aria-labelledby="games-heading">
+        <div class="section-header">
+          <div>
+            <h2 id="games-heading">Juegos Disponibles</h2>
+            <p class="section-sub">Todos adaptados para partidas multijugador de hasta 24 jugadores.</p>
+          </div>
+          <span class="pill-count" id="games-count-pill">6 juegos</span>
+        </div>
+
+        <div id="games-grid" class="games-grid">
+          <!-- Populated dynamically from /api/games -->
+        </div>
+      </section>
+
+      <!-- SERVER RECORDS & HALL OF FAME -->
+      <section class="section records-section" id="records-section" aria-labelledby="records-heading">
+        <div class="section-header">
+          <div>
+            <h2 id="records-heading">🏆 Récords del Servidor</h2>
+            <p class="section-sub">Persistidos permanentemente en el servidor · Actualizados al instante.</p>
+          </div>
+          <span class="records-updated" id="records-updated"></span>
+        </div>
+
+        <div class="records-tabs" role="tablist" id="records-tabs">
+          <button type="button" class="tab-btn active" data-tab="hall" role="tab" aria-selected="true">🌟 Salón de la Fama</button>
+          <button type="button" class="tab-btn" data-tab="campal" role="tab">Campal</button>
+          <button type="button" class="tab-btn" data-tab="cuberacer" role="tab">Cube Racer</button>
+          <button type="button" class="tab-btn" data-tab="cxvallas" role="tab">CXVallas 24</button>
+          <button type="button" class="tab-btn" data-tab="mecanorace" role="tab">MecanoRace</button>
+          <button type="button" class="tab-btn" data-tab="racermaster" role="tab">Racer Master</button>
+          <button type="button" class="tab-btn" data-tab="trobix" role="tab">Tròbix</button>
+        </div>
+
+        <div class="records-panel">
+          <div id="records-highlight" class="records-highlight hidden"></div>
+          <div class="table-wrap">
+            <table class="records-table">
+              <thead id="records-thead"></thead>
+              <tbody id="records-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span>FACTORIAL 4 (4! = 24) · Portal de Juegos Casuales Multiplayer</span>
+      <span>Todos los récords se guardan en el servidor</span>
+    </footer>
+
+    <script src="/shared/player.js"></script>
+    <script src="/portal.js"></script>
+  </body>
+</html>
